@@ -27,15 +27,20 @@ pnpm install
 ```
 
 ## Usage
-To run the main automation script:
-```bash
-pnpm start
-````
+1. Copy the example environment file and fill in all required properties:
+   ```bash
+   cp .env.example .env
+   # Edit .env and set all necessary values
+   ```
 
-Or, if using npm:
-```bash
-npm run start
-```
+2. Run the main automation script:
+   ```bash
+   pnpm start
+   ```
+   Or, if using npm:
+   ```bash
+   npm run start
+   ```
 
 Screenshots and logs will be output to the `screenshots/` directory.
 
