@@ -1,8 +1,8 @@
-import {writeFileSync} from 'node:fs';
-import {RunnerType} from "./types";
-import {instantiateRunner} from "./runners/runner.factory";
-import {StepTimer} from "./step.timer";
-import {DotenvParseOutput, configDotenv} from "dotenv";
+import { writeFileSync } from 'node:fs';
+import { RunnerType } from './types';
+import { instantiateRunner } from './runners/runner.factory';
+import { StepLogger } from './step.logger';
+import { DotenvParseOutput, configDotenv } from 'dotenv';
 
 export async function main() {
     loadDotEnv();
@@ -14,14 +14,18 @@ export async function main() {
         throw new Error('PAGE_URL and ELEMENT_SELECTOR environment variables must be set.');
     }
 
-    const instances: RunnerType[] = [RunnerType.Playwright, RunnerType.Puppeteer];
-    await Promise.all(instances.map((instance) => runForInstance(instance, pageUrl, elementSelector)));
+    const timer = new StepLogger();
+    const instances: RunnerType[] = Object.values(RunnerType);
+
+    await Promise.all(instances.map((instance) => runForInstance(instance, pageUrl, elementSelector, timer)));
+
+    timer.printResults();
 
     return Promise.resolve('Done');
 }
 
 export function loadDotEnv(): DotenvParseOutput | undefined {
-    const {error, parsed} = configDotenv();
+    const { error, parsed } = configDotenv({ quiet: true });
 
     if (error) {
         throw error;
@@ -30,16 +34,18 @@ export function loadDotEnv(): DotenvParseOutput | undefined {
     return parsed;
 }
 
-async function runForInstance(instanceName: RunnerType, pageUrl: string, elementSelector: string) {
-    const timer = new StepTimer(instanceName);
+async function runForInstance(instanceName: RunnerType, pageUrl: string, elementSelector: string, timer: StepLogger) {
+    timer.startStep(instanceName, `Starting ${instanceName} runner`);
+
     const instance = instantiateRunner(instanceName);
 
-    timer.startStep(`Starting ${instanceName} runner`);
-
-    await timer.timeStep('initialize', () => instance.initialize());
-    await timer.timeStep('loadPage', () => instance.loadPage(pageUrl, true));
-    const imageBuffer = await timer.timeStep('screenshotElement', () => instance.screenshotElement(elementSelector));
-    const fileName = `${new Date().getTime()}-screenshot.png`;
+    await timer.timeStep(instanceName, 'initialize', () => instance.initialize());
+    await timer.timeStep(instanceName, 'loadPage', () => instance.loadPage(pageUrl, true));
+    const imageBuffer = await timer.timeStep(instanceName, 'screenshotElement', () =>
+        instance.screenshotElement(elementSelector)
+    );
+    await instance.destroy?.();
+    const fileName = `${new Date().getTime()}-${instanceName}-screenshot.png`;
 
     writeFileSync(`screenshots/${fileName}`, imageBuffer);
 }

@@ -8,6 +8,12 @@ importers:
 
   .:
     dependencies:
+      chrome-remote-interface:
+        specifier: ^0.33.3
+        version: 0.33.3
+      cli-table3:
+        specifier: ^0.6.5
+        version: 0.6.5
       dotenv:
         specifier: ^17.2.3
         version: 17.2.3
@@ -18,9 +24,15 @@ importers:
         specifier: ^24.29.0
         version: 24.29.0(typescript@5.9.3)
     devDependencies:
+      '@types/chrome-remote-interface':
+        specifier: ^0.31.14
+        version: 0.31.14
       '@types/node':
         specifier: ^24.10.0
         version: 24.10.0
+      prettier:
+        specifier: ^3.6.2
+        version: 3.6.2
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@24.10.0)(typescript@5.9.3)
@@ -37,6 +49,10 @@ packages:
   '@babel/helper-validator-identifier@7.28.5':
     resolution: {integrity: sha512-qSs4ifwzKJSV39ucNjsvc6WVHs6b7S03sOh2OcHF9UHfVPqWWALUsNUVzhSBiItjRZoLHx7nIarVjqKVusUZ1Q==}
     engines: {node: '>=6.9.0'}
+
+  '@colors/colors@1.5.0':
+    resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
+    engines: {node: '>=0.1.90'}
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -71,6 +87,9 @@ packages:
 
   '@tsconfig/node16@1.0.4':
     resolution: {integrity: sha512-vxhUy4J8lyeyinH7Azl1pdd43GJhZH/tP2weN8TntQblOY+A0XbT8DJk1/oCPuOOyg/Ja757rG0CgHcWC8OfMA==}
+
+  '@types/chrome-remote-interface@0.31.14':
+    resolution: {integrity: sha512-H9hTcLu1y+Ms6GDPXXeGhgxaOSD69yEo674vjJw5EeW1tTwYo8fEkf7A9nWlnO6ArJsS7c41iZeX6mRDQ1LhEw==}
 
   '@types/node@24.10.0':
     resolution: {integrity: sha512-qzQZRBqkFsYyaSWXuEHc2WR9c0a0CXwiE5FWUvn7ZM+vdy1uZLfCunD38UzhuB7YN/J11ndbDBcTmOdxJo9Q7A==}
@@ -166,10 +185,18 @@ packages:
     resolution: {integrity: sha512-P8BjAsXvZS+VIDUI11hHCQEv74YT67YUi5JJFNWIqL235sBmjX4+qx9Muvls5ivyNENctx46xQLQ3aTuE7ssaQ==}
     engines: {node: '>=6'}
 
+  chrome-remote-interface@0.33.3:
+    resolution: {integrity: sha512-zNnn0prUL86Teru6UCAZ1yU1XeXljHl3gj7OrfPcarEfU62OUU4IujDPdTDW3dAWwRqN3ZMG/Chhkh2gPL/wiw==}
+    hasBin: true
+
   chromium-bidi@10.5.1:
     resolution: {integrity: sha512-rlj6OyhKhVTnk4aENcUme3Jl9h+cq4oXu4AzBcvr8RMmT6BR4a3zSNT9dbIfXr9/BS6ibzRyDhowuw4n2GgzsQ==}
     peerDependencies:
       devtools-protocol: '*'
+
+  cli-table3@0.6.5:
+    resolution: {integrity: sha512-+W/5efTR7y5HRD7gACw9yQjqMVvEMLBHmboM/kPWam+H+Hmyrgjh6YncVKK122YZkXrLudzTuAukUw9FnMf7IQ==}
+    engines: {node: 10.* || >= 12.*}
 
   cliui@8.0.1:
     resolution: {integrity: sha512-BSeNnyus75C4//NQ9gQt1/csTXyo/8Sb+afLAkzAptFuMsod9HFokGNudZpi/oQV73hnVK+sR+5PVRMd+Dr7YQ==}
@@ -181,6 +208,9 @@ packages:
 
   color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
+
+  commander@2.11.0:
+    resolution: {integrity: sha512-b0553uYA5YAEGgyYIGYROzKQ7X5RAqedkfjiZxwi0kL1g3bOaBNNZfYkzt/CL0umgD5wc9Jec2FbB98CjkMRvQ==}
 
   cosmiconfig@9.0.0:
     resolution: {integrity: sha512-itvL5h8RETACmOTFc4UfIyB2RfEHi71Ax6E/PivVxq9NseKbOWpeyHEOIbmAw1rs8Ak0VursQNww7lf7YtUwzg==}
@@ -213,6 +243,9 @@ packages:
 
   devtools-protocol@0.0.1521046:
     resolution: {integrity: sha512-vhE6eymDQSKWUXwwA37NtTTVEzjtGVfDr3pRbsWEQ5onH/Snp2c+2xZHWJJawG/0hCCJLRGt4xVtEVUVILol4w==}
+
+  devtools-protocol@0.0.927104:
+    resolution: {integrity: sha512-5jfffjSuTOv0Lz53wTNNTcCUV8rv7d82AhYcapj28bC2B5tDxEZzVb7k51cNxZP2KHw24QE+sW7ZuSeD9NfMpA==}
 
   diff@4.0.2:
     resolution: {integrity: sha512-58lmxKSA4BNyLz+HHMUzlOEpg09FV+ev6ZMe3vJihgdxzgcwZ8VoEEPmALCZG9LmqfVoNMMKpttIYTVG6uDY7A==}
@@ -376,6 +409,11 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
+  prettier@3.6.2:
+    resolution: {integrity: sha512-I7AIg5boAr5R0FFtJ6rCfD+LFsWHp81dolrFD8S79U9tb8Az2nGrJncnMSnys+bpQJfRUzqs9hnA81OAA3hCuQ==}
+    engines: {node: '>=14'}
+    hasBin: true
+
   progress@2.0.3:
     resolution: {integrity: sha512-7PiHtLll5LdnKIMw100I+8xJXR5gW2QwWYkT6iJva0bXitZKa/XMrSbdmg3r2Xnaidz9Qumd0VPaMrZlF9V9sA==}
     engines: {node: '>=0.4.0'}
@@ -489,6 +527,18 @@ packages:
   wrappy@1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
 
+  ws@7.5.10:
+    resolution: {integrity: sha512-+dbF1tHwZpXcbOJdVOkzLDxZP1ailvSxM6ZweXTegylPny803bFhA+vqBYw4s31NSAk4S2Qz+AKXK9a4wkdjcQ==}
+    engines: {node: '>=8.3.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: ^5.0.2
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
   ws@8.18.3:
     resolution: {integrity: sha512-PEIGCY5tSlUt50cqyMXfCzX+oOPqN0vuGqWzbcJ2xvnkzkq46oOpz7dQaTDBdfICb4N14+GARUDw2XV2N4tvzg==}
     engines: {node: '>=10.0.0'}
@@ -533,6 +583,9 @@ snapshots:
 
   '@babel/helper-validator-identifier@7.28.5': {}
 
+  '@colors/colors@1.5.0':
+    optional: true
+
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
@@ -570,6 +623,10 @@ snapshots:
   '@tsconfig/node14@1.0.3': {}
 
   '@tsconfig/node16@1.0.4': {}
+
+  '@types/chrome-remote-interface@0.31.14':
+    dependencies:
+      devtools-protocol: 0.0.927104
 
   '@types/node@24.10.0':
     dependencies:
@@ -647,11 +704,25 @@ snapshots:
 
   callsites@3.1.0: {}
 
+  chrome-remote-interface@0.33.3:
+    dependencies:
+      commander: 2.11.0
+      ws: 7.5.10
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
   chromium-bidi@10.5.1(devtools-protocol@0.0.1521046):
     dependencies:
       devtools-protocol: 0.0.1521046
       mitt: 3.0.1
       zod: 3.25.76
+
+  cli-table3@0.6.5:
+    dependencies:
+      string-width: 4.2.3
+    optionalDependencies:
+      '@colors/colors': 1.5.0
 
   cliui@8.0.1:
     dependencies:
@@ -664,6 +735,8 @@ snapshots:
       color-name: 1.1.4
 
   color-name@1.1.4: {}
+
+  commander@2.11.0: {}
 
   cosmiconfig@9.0.0(typescript@5.9.3):
     dependencies:
@@ -689,6 +762,8 @@ snapshots:
       esprima: 4.0.1
 
   devtools-protocol@0.0.1521046: {}
+
+  devtools-protocol@0.0.927104: {}
 
   diff@4.0.2: {}
 
@@ -850,6 +925,8 @@ snapshots:
       playwright-core: 1.56.1
     optionalDependencies:
       fsevents: 2.3.2
+
+  prettier@3.6.2: {}
 
   progress@2.0.3: {}
 
@@ -1014,6 +1091,8 @@ snapshots:
       strip-ansi: 6.0.1
 
   wrappy@1.0.2: {}
+
+  ws@7.5.10: {}
 
   ws@8.18.3: {}
 

@@ -1,4 +1,4 @@
-import {Buffer} from "buffer";
+import { Buffer } from 'buffer';
 
 export interface RunnerInterface {
     /**
@@ -19,4 +19,9 @@ export interface RunnerInterface {
      * @param selector
      */
     screenshotElement(selector: string): Promise<Buffer>;
+
+    /**
+     * Close and destroy runner
+     */
+    destroy?(): Promise<void> | void;
 }

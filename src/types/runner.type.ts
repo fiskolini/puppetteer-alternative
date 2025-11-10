@@ -1,4 +1,5 @@
 export enum RunnerType {
     Playwright = 'playwright',
-    Puppeteer = 'puppeteer'
+    Puppeteer = 'puppeteer',
+    ChromeDevTools = 'cdp',
 }

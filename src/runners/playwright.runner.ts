@@ -1,22 +1,19 @@
-import {chromium, Browser, Page} from 'playwright';
-
-import {RunnerInterface} from './runner.interface';
+import { chromium, Browser, Page } from 'playwright';
+import { RunnerInterface } from './runner.interface';
 
 export class PlaywrightRunner implements RunnerInterface {
     private browser: Browser | undefined;
     private initialized: boolean | undefined;
     private page: Page | undefined;
 
-    public constructor() {
-
-    }
+    public constructor() {}
 
     public async initialize() {
         if (this.initialized) {
             throw new Error(`Cannot initialize playwright runner. Already initialized.`);
         }
 
-        this.browser = await chromium.launch({headless: true, args: ['--no-sandbox']})
+        this.browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
         this.initialized = true;
     }
 
@@ -26,12 +23,12 @@ export class PlaywrightRunner implements RunnerInterface {
             throw new Error(`Browser must be initialized.`);
         }
 
-        const viewport = {width: 800, height: 600};
+        const viewport = { width: 800, height: 600 };
 
-        const context = await this.browser.newContext({viewport, javaScriptEnabled, deviceScaleFactor: 4});
+        const context = await this.browser.newContext({ viewport, javaScriptEnabled, deviceScaleFactor: 4 });
         this.page = await context.newPage();
 
-        await this.page.goto(url, {waitUntil: 'networkidle', timeout: 15000});
+        await this.page.goto(url, { waitUntil: 'networkidle', timeout: 15000 });
     }
 
     public async screenshotElement(selector: string) {
@@ -40,9 +37,9 @@ export class PlaywrightRunner implements RunnerInterface {
         }
 
         const locator = this.page.locator(selector);
-        await locator.waitFor({state: 'visible', timeout: 5000});
+        await locator.waitFor({ state: 'visible', timeout: 5000 });
 
-        return locator.screenshot({type: 'png'});
+        return locator.screenshot({ type: 'png', omitBackground: true });
     }
 
     private ensureInitialization(): void {
@@ -50,5 +47,4 @@ export class PlaywrightRunner implements RunnerInterface {
             throw new Error(`Playwright runner must be initialized first.`);
         }
     }
-
 }

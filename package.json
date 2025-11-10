@@ -8,12 +8,16 @@
     "start": "ts-node src/index.ts"
   },
   "dependencies": {
+    "chrome-remote-interface": "^0.33.3",
+    "cli-table3": "^0.6.5",
     "dotenv": "^17.2.3",
     "playwright": "^1.56.1",
     "puppeteer": "^24.29.0"
   },
   "devDependencies": {
+    "@types/chrome-remote-interface": "^0.31.14",
     "@types/node": "^24.10.0",
+    "prettier": "^3.6.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },
