@@ -35,17 +35,21 @@ export function loadDotEnv(): DotenvParseOutput | undefined {
 }
 
 async function runForInstance(instanceName: RunnerType, pageUrl: string, elementSelector: string, timer: StepLogger) {
-    timer.startStep(instanceName, `Starting ${instanceName} runner`);
+    try {
+        timer.startStep(instanceName, `Starting ${instanceName} runner`);
 
-    const instance = instantiateRunner(instanceName);
+        const instance = instantiateRunner(instanceName);
 
-    await timer.timeStep(instanceName, 'initialize', () => instance.initialize());
-    await timer.timeStep(instanceName, 'loadPage', () => instance.loadPage(pageUrl, true));
-    const imageBuffer = await timer.timeStep(instanceName, 'screenshotElement', () =>
-        instance.screenshotElement(elementSelector)
-    );
-    await instance.destroy?.();
-    const fileName = `${new Date().getTime()}-${instanceName}-screenshot.png`;
+        await timer.timeStep(instanceName, 'initialize', () => instance.initialize());
+        await timer.timeStep(instanceName, 'loadPage', () => instance.loadPage(pageUrl, true));
+        const imageBuffer = await timer.timeStep(instanceName, 'screenshotElement', () =>
+            instance.screenshotElement(elementSelector)
+        );
+        await instance.destroy?.();
+        const fileName = `${new Date().getTime()}-${instanceName}-screenshot.png`;
 
-    writeFileSync(`screenshots/${fileName}`, imageBuffer);
+        writeFileSync(`screenshots/${fileName}`, imageBuffer);
+    } catch (e) {
+        console.error(`Error while processing ${instanceName}:`, e);
+    }
 }
