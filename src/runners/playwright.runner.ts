@@ -1,50 +1,85 @@
-import { chromium, Browser, Page } from 'playwright';
+import { chromium, Browser, BrowserContext, Page } from 'playwright';
 import { RunnerInterface } from './runner.interface';
 
 export class PlaywrightRunner implements RunnerInterface {
-    private browser: Browser | undefined;
-    private initialized: boolean | undefined;
-    private page: Page | undefined;
+    private static sharedBrowser: Browser | null = null;
+    private initialized = false;
 
-    public constructor() {}
+    private context: BrowserContext | null = null;
+    private page: Page | null = null;
 
-    public async initialize() {
-        if (this.initialized) {
-            throw new Error(`Cannot initialize playwright runner. Already initialized.`);
+    public async initialize(): Promise<void> {
+        if (this.initialized) return;
+
+        if (!PlaywrightRunner.sharedBrowser) {
+            PlaywrightRunner.sharedBrowser = await chromium.launch({
+                headless: true,
+                args: ['--no-sandbox'],
+            });
         }
 
-        this.browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
         this.initialized = true;
     }
 
-    public async loadPage(url: string, javaScriptEnabled: boolean) {
-        this.ensureInitialization();
-        if (!this.browser) {
-            throw new Error(`Browser must be initialized.`);
+    public async loadPage(url: string, jsEnabled: boolean): Promise<void> {
+        this.ensureInitialized();
+
+        const browser = PlaywrightRunner.sharedBrowser;
+        if (!browser) throw new Error('Shared browser not initialized');
+
+        // Close any previous context to free memory
+        if (this.context) {
+            await this.context.close().catch(() => {});
         }
 
-        const viewport = { width: 800, height: 600 };
+        this.context = await browser.newContext({
+            viewport: { width: 1280, height: 720 },
+            javaScriptEnabled: jsEnabled,
+            deviceScaleFactor: 4,
+        });
 
-        const context = await this.browser.newContext({ viewport, javaScriptEnabled, deviceScaleFactor: 4 });
-        this.page = await context.newPage();
+        this.page = await this.context.newPage();
 
-        await this.page.goto(url, { waitUntil: 'networkidle', timeout: 15000 });
+        await this.page.goto(url, {
+            waitUntil: 'networkidle',
+            timeout: 20000,
+        });
     }
 
-    public async screenshotElement(selector: string) {
-        if (!this.page) {
-            throw new Error(`Page must be initialized.`);
-        }
+    public async screenshotElement(selector: string): Promise<Buffer> {
+        if (!this.page) throw new Error('Page not loaded yet');
 
         const locator = this.page.locator(selector);
-        await locator.waitFor({ state: 'visible', timeout: 5000 });
 
-        return locator.screenshot({ type: 'png', omitBackground: true });
+        // Wait longer and for any visible or attached state
+        await locator.waitFor({ state: 'visible', timeout: 15000 });
+
+        const buffer = await locator.screenshot({
+            type: 'png',
+            omitBackground: true,
+        });
+
+        // Clean up context to avoid leaks
+        await this.context?.close().catch(() => {});
+        this.context = null;
+        this.page = null;
+
+        return buffer;
     }
 
-    private ensureInitialization(): void {
-        if (!this.initialized) {
-            throw new Error(`Playwright runner must be initialized first.`);
-        }
+    public getBrowserPid(): number | undefined {
+        const browser = PlaywrightRunner.sharedBrowser;
+        const proc = (browser as any)?.process?.();
+        return proc?.pid;
+    }
+
+    public async destroy(): Promise<void> {
+        this.context = null;
+        this.page = null;
+        this.initialized = false;
+    }
+
+    private ensureInitialized() {
+        if (!this.initialized) throw new Error('PlaywrightRunner must be initialized first.');
     }
 }

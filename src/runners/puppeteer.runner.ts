@@ -2,7 +2,7 @@ import puppeteer, { Browser, Page } from 'puppeteer';
 import { RunnerInterface } from './runner.interface';
 
 export class PuppeteerRunner implements RunnerInterface {
-    private browser: Browser | undefined;
+    private static browser: Browser | undefined;
     private initialized: boolean | undefined;
     private page: Page | undefined;
 
@@ -13,19 +13,22 @@ export class PuppeteerRunner implements RunnerInterface {
             throw new Error(`Cannot initialize puppeteer runner. Already initialized.`);
         }
 
-        this.browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+        if (!PuppeteerRunner.browser) {
+            PuppeteerRunner.browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+        }
         this.initialized = true;
     }
 
     public async loadPage(url: string, javaScriptEnabled: boolean) {
         this.ensureInitialization();
-        if (!this.browser) {
+        if (!PuppeteerRunner.browser) {
             throw new Error(`Browser must be initialized.`);
         }
 
         const viewport = { width: 800, height: 600, deviceScaleFactor: 4 };
 
-        this.page = await this.browser.newPage();
+        const context = await PuppeteerRunner.browser.createBrowserContext();
+        this.page = await context.newPage();
         await this.page.setViewport(viewport);
 
         // Puppeteer enables JavaScript by default; to disable:
@@ -50,6 +53,10 @@ export class PuppeteerRunner implements RunnerInterface {
 
         const screenshot = await element.screenshot({ type: 'png', omitBackground: true });
         return Buffer.from(screenshot);
+    }
+
+    public async destroy(): Promise<void> {
+        if (this.page) await this.page.close();
     }
 
     private ensureInitialization(): void {

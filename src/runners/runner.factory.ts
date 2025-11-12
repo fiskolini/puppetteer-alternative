@@ -5,7 +5,7 @@ import { RunnerType } from '../types';
 import { CDPRunner } from './cdp.runner';
 
 export function instantiateRunner(name: RunnerType): RunnerInterface {
-    const mappedRunnerInstances: Record<RunnerType, RunnerInterface> = {
+    const mappedRunnerInstances: Partial<Record<RunnerType, RunnerInterface>> = {
         [RunnerType.Playwright]: new PlaywrightRunner(),
         [RunnerType.Puppeteer]: new PuppeteerRunner(),
         [RunnerType.ChromeDevTools]: new CDPRunner(),

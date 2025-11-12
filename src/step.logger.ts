@@ -1,118 +1,149 @@
 import Table from 'cli-table3';
+import { performance } from 'node:perf_hooks';
+import { execSync } from 'node:child_process';
+import { setInterval, clearInterval } from 'timers';
+
+interface StepEntry {
+    id: string;
+    from: string;
+    to: string;
+    elapsed: number;
+    rssSamples: number[];
+    heapUsed: number;
+    cpuUser: number;
+    cpuSystem: number;
+}
 
 export class StepLogger {
-    private lastTime: Map<string, number> = new Map();
-    private lastStep: Map<string, string> = new Map();
-    private logs: Map<string, any[]> = new Map();
+    private logs: StepEntry[] = [];
+    private lastStep = new Map<string, string>();
+    private readonly runner: string;
 
-    public startStep(prefix: string, stepName: string) {
-        this.lastTime.set(prefix, Date.now());
-        this.lastStep.set(prefix, stepName);
+    constructor(runner: string) {
+        this.runner = runner;
     }
 
-    public logStep(prefix: string, stepName: string) {
-        const now = Date.now();
-        const lastTime = this.lastTime.get(prefix) ?? now;
-        const lastStep = this.lastStep.get(prefix) ?? 'start';
-        const elapsed = now - lastTime;
-        this.log(prefix, lastStep, stepName, elapsed);
-        this.lastTime.set(prefix, now);
-        this.lastStep.set(prefix, stepName);
+    public startStep(id: string, stepName: string) {
+        this.lastStep.set(`${this.runner}-${id}`, stepName);
     }
 
-    public async timeStep<T>(prefix: string, stepName: string, fn: () => Promise<T>): Promise<T> {
-        this.logStep(prefix, stepName);
-        const start = Date.now();
+    /** Sample RSS periodically while fn() runs */
+    public async timeStep<T>(id: string, stepName: string, fn: () => Promise<T>, browserPid?: number): Promise<T> {
+        const key = `${this.runner}-${id}`;
+        const from = this.lastStep.get(key) ?? 'start';
+        const start = performance.now();
+        const cpuStart = process.cpuUsage();
+        const rssSamples: number[] = [];
+
+        let sampler: NodeJS.Timeout | undefined;
+        sampler = setInterval(() => {
+            const rss = StepLogger.getRSS(browserPid ?? process.pid);
+            if (rss > 0) rssSamples.push(rss);
+        }, 200);
+
+        let result: T;
         try {
-            const result = await fn();
-            const elapsed = Date.now() - start;
-            this.log(prefix, stepName, stepName, elapsed);
-            return result;
+            result = await fn();
+        } catch (e) {
+            this.logError(id, e instanceof Error ? e : new Error(String(e)));
+            throw e;
         } finally {
-            this.startStep(prefix, stepName);
+            if (sampler) clearInterval(sampler);
         }
+
+        const elapsed = performance.now() - start;
+        const cpuDiff = process.cpuUsage(cpuStart);
+        const mem = process.memoryUsage();
+
+        this.logs.push({
+            id,
+            from,
+            to: stepName,
+            elapsed,
+            rssSamples,
+            heapUsed: mem.heapUsed / 1024 / 1024,
+            cpuUser: cpuDiff.user / 1000,
+            cpuSystem: cpuDiff.system / 1000,
+        });
+
+        console.log(`[StepLogger] ${this.runner} [${id}]: ${from} -> ${stepName}: ${elapsed.toFixed(1)} ms`);
+
+        this.lastStep.set(key, stepName);
+        return result;
     }
 
-    private log(prefix: string, from: string, to: string, elapsed: number) {
-        const memory = process.memoryUsage();
-        const cpu = process.cpuUsage();
-        const toMB = (bytes: number) => (bytes / (1024 * 1024)).toFixed(2);
+    private static getRSS(pid?: number): number {
+        const read = (p: number) => {
+            try {
+                const out = execSync(`/bin/ps -o rss= -p ${p}`).toString().trim();
+                const kb = parseInt(out, 10);
+                return isNaN(kb) ? 0 : kb;
+            } catch {
+                return 0;
+            }
+        };
 
-        if (!this.logs.has(prefix)) {
-            this.logs.set(prefix, []);
-        }
+        const nodeKb = read(process.pid);
+        const browserKb = pid ? read(pid) : 0;
+        return (nodeKb + browserKb) / 1024;
+    }
 
-        this.logs.get(prefix)!.push([
-            prefix, // Runner nam
-            from, // Previous step name
-            to, // Current step name
-            elapsed, // Elapsed time in milliseconds
-            toMB(memory.rss), // Resident Set Size (memory usage) in MB
-            toMB(memory.heapUsed), // Heap used (memory usage) in MB
-            cpu.user, // CPU user time in microseconds
-            cpu.system, // CPU system time in microseconds
-        ]);
-
-        console.log(`[StepTimer] ${prefix}: ${from} -> ${to}: ${elapsed} ms`);
+    public logError(id: string, error: Error) {
+        console.error(`[StepLogger] ${this.runner} [${id}]: Error - ${error.message}`, error);
     }
 
     public printResults() {
-        const runnerTotals: { [prefix: string]: number } = {};
-        const summaryRows: any[] = [];
+        const avg = (arr: number[]) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
+        const std = (arr: number[]) => {
+            if (arr.length < 2) return 0;
+            const mean = avg(arr);
+            return Math.sqrt(arr.reduce((a, b) => a + (b - mean) ** 2, 0) / arr.length);
+        };
 
-        for (const [prefix, rows] of this.logs.entries()) {
-            const stepTimes: { [step: string]: number } = {};
-            let totalRss = 0,
-                totalHeapUsed = 0,
-                totalCpuUser = 0,
-                totalCpuSystem = 0,
-                totalElapsed = 0;
+        // group by step
+        const perStep: Record<string, StepEntry[]> = {};
+        for (const log of this.logs) {
+            if (!perStep[log.to]) perStep[log.to] = [];
+            perStep[log.to].push(log);
+        }
 
-            for (const row of rows) {
-                const step = row[2];
-                stepTimes[step] = (stepTimes[step] ?? 0) + Number(row[3]);
-                totalRss += Number(row[4]);
-                totalHeapUsed += Number(row[5]);
-                totalCpuUser += Number(row[6]);
-                totalCpuSystem += Number(row[7]);
-                totalElapsed += Number(row[3]);
-            }
+        // per-step table
+        const stepTable = new Table({
+            head: [
+                'Step',
+                'Count',
+                'Avg (ms)',
+                'Std (ms)',
+                'Min (ms)',
+                'Max (ms)',
+                'Avg RSS (MB)',
+                'Peak RSS (MB)',
+                'Avg Heap (MB)',
+                'Avg CPU (ms)',
+            ],
+        });
 
-            runnerTotals[prefix] = totalElapsed;
+        for (const [step, entries] of Object.entries(perStep)) {
+            const times = entries.map((e) => e.elapsed);
+            const rssAvg = entries.map((e) => avg(e.rssSamples));
+            const rssMax = entries.map((e) => (e.rssSamples.length ? Math.max(...e.rssSamples) : 0));
+            const heap = entries.map((e) => e.heapUsed);
+            const cpu = entries.map((e) => e.cpuUser + e.cpuSystem);
 
-            summaryRows.push([
-                `${prefix}`,
-                stepTimes['initialize']?.toFixed(0) ?? '',
-                stepTimes['loadPage']?.toFixed(0) ?? '',
-                stepTimes['screenshotElement']?.toFixed(0) ?? '',
-                `${totalElapsed.toFixed(0)}`,
-                totalRss.toFixed(2),
-                totalHeapUsed.toFixed(2),
-                totalCpuUser,
-                totalCpuSystem,
+            stepTable.push([
+                step,
+                entries.length,
+                avg(times).toFixed(1),
+                std(times).toFixed(1),
+                Math.min(...times).toFixed(1),
+                Math.max(...times).toFixed(1),
+                avg(rssAvg).toFixed(1),
+                avg(rssMax).toFixed(1),
+                avg(heap).toFixed(1),
+                avg(cpu).toFixed(1),
             ]);
         }
 
-        const sorted = summaryRows
-            .map((row, idx) => ({ row, total: runnerTotals[row[0].replace(/\*\*/g, '')], idx }))
-            .sort((a, b) => a.total - b.total);
-
-        const table = new Table({
-            head: [
-                'Runner',
-                'initialize (ms)',
-                'loadPage (ms)',
-                'screenshotElement (ms)',
-                'TOTAL (ms)',
-                'RSS (MB)',
-                'HeapUsed (MB)',
-                'CPU User (µs)',
-                'CPU System (µs)',
-            ],
-            style: { head: ['bold'] },
-        });
-
-        sorted.forEach((item) => table.push(item.row));
-        console.log(table.toString());
+        console.log(stepTable.toString());
     }
 }

@@ -21,6 +21,11 @@ export interface RunnerInterface {
     screenshotElement(selector: string): Promise<Buffer>;
 
     /**
+     * Returns browser process id if available
+     */
+    getBrowserPid?(): number | undefined;
+
+    /**
      * Close and destroy runner
      */
     destroy?(): Promise<void> | void;

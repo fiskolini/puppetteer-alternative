@@ -17,6 +17,9 @@ importers:
       dotenv:
         specifier: ^17.2.3
         version: 17.2.3
+      minimist:
+        specifier: ^1.2.8
+        version: 1.2.8
       playwright:
         specifier: ^1.56.1
         version: 1.56.1
@@ -27,6 +30,9 @@ importers:
       '@types/chrome-remote-interface':
         specifier: ^0.31.14
         version: 0.31.14
+      '@types/minimist':
+        specifier: ^1.2.5
+        version: 1.2.5
       '@types/node':
         specifier: ^24.10.0
         version: 24.10.0
@@ -90,6 +96,9 @@ packages:
 
   '@types/chrome-remote-interface@0.31.14':
     resolution: {integrity: sha512-H9hTcLu1y+Ms6GDPXXeGhgxaOSD69yEo674vjJw5EeW1tTwYo8fEkf7A9nWlnO6ArJsS7c41iZeX6mRDQ1LhEw==}
+
+  '@types/minimist@1.2.5':
+    resolution: {integrity: sha512-hov8bUuiLiyFPGyFPE1lwWhmzYbirOXQNNo40+y3zow8aFVTeyn3VWL0VFFfdNddA8S4Vf0Tc062rzyNr7Paag==}
 
   '@types/node@24.10.0':
     resolution: {integrity: sha512-qzQZRBqkFsYyaSWXuEHc2WR9c0a0CXwiE5FWUvn7ZM+vdy1uZLfCunD38UzhuB7YN/J11ndbDBcTmOdxJo9Q7A==}
@@ -364,6 +373,9 @@ packages:
   make-error@1.3.6:
     resolution: {integrity: sha512-s8UhlNe7vPKomQhC1qFelMokr/Sc3AgNbso3n74mVPA5LTZwkB9NlXf4XPamLxJE8h0gh73rM94xvwRT2CVInw==}
 
+  minimist@1.2.8:
+    resolution: {integrity: sha512-2yyAR8qBkN3YuheJanUpWC5U3bb5osDywNB8RzDVlDwDHbocAJveqqj1u8+SVD7jkWT4yvsHCpWqqWqAxb0zCA==}
+
   mitt@3.0.1:
     resolution: {integrity: sha512-vKivATfr97l2/QBCYAkXYDbrIWPM2IIKEl7YPhjCvKlG3kE2gm+uBo6nEXK3M5/Ffh/FLpKExzOQ3JJoJGFKBw==}
 
@@ -628,6 +640,8 @@ snapshots:
     dependencies:
       devtools-protocol: 0.0.927104
 
+  '@types/minimist@1.2.5': {}
+
   '@types/node@24.10.0':
     dependencies:
       undici-types: 7.16.0
@@ -874,6 +888,8 @@ snapshots:
   lru-cache@7.18.3: {}
 
   make-error@1.3.6: {}
+
+  minimist@1.2.8: {}
 
   mitt@3.0.1: {}
 

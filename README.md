@@ -12,6 +12,7 @@ A TypeScript-based project providing an alternative approach to browser automati
 ## Directory Structure
 
 - `src/` — Source code, including runner implementations and utilities
+- `ids.csv` — List of IDs to be processed
 - `screenshots/` — Output directory for captured screenshots
 - `package.json` — Project dependencies and scripts
 

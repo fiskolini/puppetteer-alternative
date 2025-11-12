@@ -1,55 +1,94 @@
-import { writeFileSync } from 'node:fs';
+import { existsSync, statSync, writeFileSync, mkdirSync, readFileSync } from 'node:fs';
+import path from 'node:path';
+import { DotenvParseOutput, configDotenv } from 'dotenv';
 import { RunnerType } from './types';
 import { instantiateRunner } from './runners/runner.factory';
 import { StepLogger } from './step.logger';
-import { DotenvParseOutput, configDotenv } from 'dotenv';
 
-export async function main() {
+export async function main(runner: RunnerType, single: boolean = false) {
     loadDotEnv();
 
     const pageUrl = process.env.PAGE_URL;
+    const urlSecret = process.env.URL_SECRET;
     const elementSelector = process.env.ELEMENT_SELECTOR;
+    const idsFile = 'ids.csv';
 
-    if (!pageUrl || !elementSelector) {
-        throw new Error('PAGE_URL and ELEMENT_SELECTOR environment variables must be set.');
+    if (!pageUrl || !elementSelector || !urlSecret) {
+        throw new Error('PAGE_URL, ELEMENT_SELECTOR, and URL_SECRET environment variables must be all set.');
     }
 
-    const timer = new StepLogger();
-    const instances: RunnerType[] = Object.values(RunnerType);
+    const absPath = path.resolve(idsFile);
+    const stats = statSync(absPath);
+    if (stats.size === 0) throw new Error(`IDs file is empty: ${idsFile}`);
 
-    await Promise.all(instances.map((instance) => runForInstance(instance, pageUrl, elementSelector, timer)));
+    const timer = new StepLogger(runner);
+    const ids = loadIdsSync(idsFile);
+
+    await Promise.all(
+        (single ? [ids[0]] : ids).map(async (id) => {
+            const url = appendSecret(pageUrl, id, urlSecret);
+            await runForInstance(runner, url, id, elementSelector, timer);
+        })
+    );
 
     timer.printResults();
-
-    return Promise.resolve('Done');
+    return 'Done';
 }
 
-export function loadDotEnv(): DotenvParseOutput | undefined {
+function loadDotEnv(): DotenvParseOutput | undefined {
     const { error, parsed } = configDotenv({ quiet: true });
-
-    if (error) {
-        throw error;
-    }
-
+    if (error) throw error;
     return parsed;
 }
 
-async function runForInstance(instanceName: RunnerType, pageUrl: string, elementSelector: string, timer: StepLogger) {
+function loadIdsSync(filePath: string): string[] {
+    const abs = path.resolve(filePath);
+    const content = readFileSync(abs, 'utf-8');
+    return content
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0);
+}
+
+function appendSecret(rawUrl: string, id: string, token: string): string {
+    const url = new URL(`${rawUrl}/${id}`);
+    url.searchParams.set('secret', token);
+    return url.toString();
+}
+
+async function runForInstance(
+    runner: RunnerType,
+    pageUrl: string,
+    id: string,
+    elementSelector: string,
+    timer: StepLogger
+) {
+    const instance = instantiateRunner(runner);
+
     try {
-        timer.startStep(instanceName, `Starting ${instanceName} runner`);
+        timer.startStep(id, `Starting ${runner}`);
 
-        const instance = instantiateRunner(instanceName);
+        await timer.timeStep(id, 'initialize', () => instance.initialize());
 
-        await timer.timeStep(instanceName, 'initialize', () => instance.initialize());
-        await timer.timeStep(instanceName, 'loadPage', () => instance.loadPage(pageUrl, true));
-        const imageBuffer = await timer.timeStep(instanceName, 'screenshotElement', () =>
-            instance.screenshotElement(elementSelector)
+        const browserPid = instance.getBrowserPid?.();
+
+        await timer.timeStep(id, 'loadPage', () => instance.loadPage(pageUrl, true), browserPid);
+
+        const imageBuffer = await timer.timeStep(
+            id,
+            'screenshotElement',
+            () => instance.screenshotElement(elementSelector),
+            browserPid
         );
-        await instance.destroy?.();
-        const fileName = `${new Date().getTime()}-${instanceName}-screenshot.png`;
 
-        writeFileSync(`screenshots/${fileName}`, imageBuffer);
+        const folderPath = path.resolve(`screenshots/${id}`);
+        if (!existsSync(folderPath)) mkdirSync(folderPath, { recursive: true });
+
+        const fileName = `${Date.now()}-${runner}.png`;
+        writeFileSync(path.join(folderPath, fileName), imageBuffer);
     } catch (e) {
-        console.error(`Error while processing ${instanceName}:`, e);
+        timer.logError(id, e instanceof Error ? e : new Error(String(e)));
     }
+
+    await instance.destroy?.();
 }
